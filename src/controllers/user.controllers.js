@@ -2,14 +2,15 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiError} from "../utils/ApiError.js"
 import { User } from "../models/user.models.js";
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
-import { ApiResponse } from "../utils/ApiResponse.js";}
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 
-const registerUser = asyncHandler(async (req,res) =>{
+const registerUser = asyncHandler( async (req, res) => {
+    
    //steps 
    //step1  get user details from frontend (through postman for now)
     
-   const {fullname,email,username,password} = req.body
+   const {fullname,email,username,password} = req.body 
    
 
    //step2 validation of details -not empty and other
@@ -24,7 +25,7 @@ const registerUser = asyncHandler(async (req,res) =>{
 
    //step3 check if user already exists via email/username
 
-   const existedUser = User.findOne({
+   const existedUser = await User.findOne({
     $or: [{ email },{ username }]
    })
   if(existedUser){
@@ -32,9 +33,10 @@ const registerUser = asyncHandler(async (req,res) =>{
   }
    //step4 check for images, check for avatar
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath= req?.files?.coverImage[0]?.path
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
+    const coverImageLocalPath= req.files?.coverImage?.[0]?.path;
 
+   
     if(!avatarLocalPath){
         throw new ApiError(400,"Avatar is required!")
     }
@@ -52,15 +54,16 @@ if(!avatar){
 
 const user = await User.create({
     fullname,
-    avatar: avatar.url,
+    avatar: avatar.url ,
     coverImage: coverImage?.url || "",
     password,
+    email,
     username: username.toLowerCase()
 })
 
 //remove password and refresh token field from response
-   const createdUser = user.findById(user._id).select(
-    "-password -refreshToken" ,//dont want these fiels
+   const createdUser = await User.findById(user._id).select(
+    "-password -refreshToken"
 )
 
 //check for user creation
